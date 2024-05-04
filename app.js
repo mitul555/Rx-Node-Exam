@@ -7,9 +7,11 @@ const app = express();
 const bcrypt = require("bcryptjs"); // bcyypt password
 const { Json } = require('sequelize/lib/utils');
 const { where } = require('sequelize');
+const { body, validationResult } = require('express-validator');
 app.use(express.json());
+const router = require('express').Router();
 
-//database connection
+// check for project running
 app.get('/', (req,respoance) => {
     respoance.send("hello test");
 });
@@ -36,15 +38,34 @@ app.post('/api/auth/register', (req,respoance) => {
         console.log('add sucessfully');
     });
 });
+
+// it's just test code we are working on validation.
+router.post('/api/registration', (req, res) => {
+    const userData = req.body;
+    const validationResult = validateData(userData);
+    if (validationResult.error) {
+        // If validation fails, render the form again with an error message
+        /* res.render('./partials/registration', { validationError: validationResult.error.details[0].message }); */
+    } else {
+        // Handle registration logic here
+        res.send('Registration successful!');
+    }
+});
+function validateData(userData) {
+    userData.name.string().alphanum().min(3).max(30).required(),
+    userData.email.string().email().required(),
+    userData.password.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required();
+}
+
 // endpoint /api/auth/login
 app.post('/api/auth/login', (req,respoance) => {
     const {email, password} = req.body;
     if (email == undefined || password == undefined) {
-        return respoance.status(400).json("message: 'User name and password are required'");
+        return respoance.json("message: 'User name and password are required'");
     }
     const users = User.find(e => e.email === email && e.password === password);
     if (!users) {
-        return respoance.status(400).json("message: 'User not exits'");
+        return respoance.json("message: 'User not exits'");
     }
     return respoance.json("message: 'Sucessfully Login'");
 });
@@ -118,7 +139,7 @@ app.get('/api/products/:id', (req,respoance) => {
     });
 });
 //server start
-const PORT = process.env.PORT || 3043;
+const PORT = process.env.PORT || 3045;
 app.listen(PORT, () => {
     console.log('server is running on this '  + PORT);
 });
